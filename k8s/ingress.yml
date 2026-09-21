@@ -5,7 +5,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: app4.avej.com
+    - host: app4-{{ENV}}.avej.com
       http:
         paths:
           - path: /
@@ -27,7 +27,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: app4.{{env}}avej.com
+    - host: app4-{{ENV}}.avej.com
       http:
         paths:
           - path: /api(/|$)(.*)
