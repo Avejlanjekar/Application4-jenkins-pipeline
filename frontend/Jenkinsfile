@@ -22,8 +22,10 @@ def deployToEks(String cluster_credentials, String namespace, String environment
     withKubeConfig(credentialsId: "${cluster_credentials}", namespace: "${namespace}"){
         sh "echo deploying to ${namespace} namespace..."
         sh "sed -i -e 's/{{ENV}}/${environment}/g' -e 's/{{COMMITID}}/${env.GIT_COMMIT}/g' k8s/frontend-deployment.yml "
+        sh "sed -i 's/{{ENV}}/${environment}/g' k8s/ingress.yml"
         sh 'kubectl apply -f k8s/frontend-deployment.yml'
         sh 'kubectl apply -f k8s/frontend-service.yml'
+        sh 'cat k8s/ingress.yml'
         sh 'kubectl apply -f k8s/ingress.yml'
     }
 }
