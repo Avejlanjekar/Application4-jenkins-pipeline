@@ -1,34 +1,3 @@
-def buildAndPushImage(String BACKEND_IMAGE, String DH_CREDENTIALS, String Buildcontext){
-    def backend= docker.build("${BACKEND_IMAGE}:${GIT_COMMIT}","${Buildcontext}")
-
-    docker.withRegistry("${env.REGISTRY_URL}","${DH_CREDENTIALS}"){
-        backend.push()
-    }
-}
-
-def promoteImage(String sourceImage, String targetImage, String source_DH_Credentials, String target_DH_Credentials){
-    docker.withRegistry("${env.REGISTRY_URL}","${source_DH_Credentials}"){
-        docker.image("${sourceImage}:${GIT_COMMIT}").pull()
-    }
-
-    sh "docker tag ${sourceImage}:${GIT_COMMIT} ${targetImage}:${GIT_COMMIT}"
-
-    docker.withRegistry("${env.REGISTRY_URL}","${target_DH_Credentials}"){
-        docker.image("${targetImage}:${GIT_COMMIT}").push()
-    }
-}
-
-def deployToEks(String cluster_credentials, String namespace, String environment){
-    withKubeConfig(credentialsId: "${cluster_credentials}", namespace: "${namespace}"){
-        sh "echo deploying to ${namespace} namespace..."
-        sh "sed -i -e 's/{{ENV}}/${environment}/g' -e 's/{{COMMITID}}/${env.GIT_COMMIT}/g' k8s/backend-deployment.yml "
-        sh 'kubectl apply -f k8s/backend-deployment.yml'
-        sh 'kubectl apply -f k8s/backend-service.yml'
-    }
-}
-
-
-
 pipeline{
     agent any
 
@@ -203,5 +172,34 @@ pipeline{
         always{
             deleteDir()
         }
+    }
+}
+
+def buildAndPushImage(String BACKEND_IMAGE, String DH_CREDENTIALS, String Buildcontext){
+    def backend= docker.build("${BACKEND_IMAGE}:${GIT_COMMIT}","${Buildcontext}")
+
+    docker.withRegistry("${env.REGISTRY_URL}","${DH_CREDENTIALS}"){
+        backend.push()
+    }
+}
+
+def promoteImage(String sourceImage, String targetImage, String source_DH_Credentials, String target_DH_Credentials){
+    docker.withRegistry("${env.REGISTRY_URL}","${source_DH_Credentials}"){
+        docker.image("${sourceImage}:${GIT_COMMIT}").pull()
+    }
+
+    sh "docker tag ${sourceImage}:${GIT_COMMIT} ${targetImage}:${GIT_COMMIT}"
+
+    docker.withRegistry("${env.REGISTRY_URL}","${target_DH_Credentials}"){
+        docker.image("${targetImage}:${GIT_COMMIT}").push()
+    }
+}
+
+def deployToEks(String cluster_credentials, String namespace, String environment){
+    withKubeConfig(credentialsId: "${cluster_credentials}", namespace: "${namespace}"){
+        sh "echo deploying to ${namespace} namespace..."
+        sh "sed -i -e 's/{{ENV}}/${environment}/g' -e 's/{{COMMITID}}/${env.GIT_COMMIT}/g' k8s/backend-deployment.yml "
+        sh 'kubectl apply -f k8s/backend-deployment.yml'
+        sh 'kubectl apply -f k8s/backend-service.yml'
     }
 }
